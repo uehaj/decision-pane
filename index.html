@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>decision-pane — the decisions your agent is waiting on</title>
+<meta name="description" content="A Claude Code mod that lists the questions your agent is waiting on you to answer, from decisions.md, with OK, Hold and comment buttons. No model calls.">
+<style>
+:root{--bg:#f7f7fb;--fg:#1e1e2e;--mute:#5c5f77;--card:#fff;--line:#dcdde6;--accent:#d97706;--code:#1e1e2e;--code-fg:#e6e6f0}
+@media (prefers-color-scheme:dark){:root{--bg:#11111b;--fg:#cdd6f4;--mute:#a6adc8;--card:#181825;--line:#313244;--accent:#fab387;--code:#0b0b13;--code-fg:#cdd6f4}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.65 system-ui,-apple-system,"Segoe UI","Hiragino Sans","Noto Sans JP",sans-serif}
+.wrap{max-width:960px;margin:0 auto;padding:0 20px}
+header{text-align:center;padding:56px 0 24px}
+h1{font-size:clamp(2.2rem,6vw,3.4rem);margin:0;letter-spacing:-.02em}
+.sub{font-size:1.25rem;margin:6px 0 18px;color:var(--accent);font-weight:600}
+.lead{max-width:660px;margin:0 auto 24px;color:var(--mute);font-size:1.08rem}
+.cta{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.cta a{padding:9px 18px;border-radius:999px;border:1px solid var(--line);text-decoration:none;color:var(--fg);background:var(--card);font-weight:600}
+.cta a.p{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.shot{display:block;max-width:100%;height:auto;border-radius:12px;border:1px solid var(--line);box-shadow:0 18px 50px -24px #0006;margin:28px auto 8px}
+.shots{display:grid;grid-template-columns:3fr 1fr;gap:16px;align-items:start}
+.shots img{margin:0}
+@media (max-width:700px){.shots{grid-template-columns:1fr}}
+section{padding:36px 0}
+h2{font-size:1.55rem;margin:0 0 14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+.card h3{margin:0 0 6px;font-size:1.05rem}
+.card p{margin:0;color:var(--mute);font-size:.95rem}
+pre{background:var(--code);color:var(--code-fg);padding:14px 16px;border-radius:10px;overflow-x:auto;font:13.5px/1.55 ui-monospace,Menlo,monospace}
+code{font-family:ui-monospace,Menlo,monospace;font-size:.92em}
+p code,li code{background:var(--card);border:1px solid var(--line);border-radius:5px;padding:0 4px}
+.flow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center;margin:10px 0}
+.flow span{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:.93rem}
+.flow b{color:var(--accent)}
+.note{color:var(--mute);font-size:.92rem}
+footer{padding:28px 0 48px;text-align:center;color:var(--mute);font-size:.9rem;border-top:1px solid var(--line)}
+a{color:var(--accent)}
+</style>
+</head>
+<body>
+<header class="wrap">
+  <h1>decision-pane</h1>
+  <p class="sub" data-ja="エージェントが待っている判断を、1 か所に">the decisions your agent is waiting on, in one place</p>
+  <p class="lead" data-ja="長い作業を Claude Code に任せると、「この方針でいい？」「マージしていい？」という問いが会話の上へ流れていき、エージェントは返事を待ったまま止まります。decision-pane は、その問いを会話の横のペインにカードで並べ、✔ OK・⏸ 保留・コメントで答えられるようにする mod です。LLM は呼びません。">Hand Claude Code a long task and its questions — “is this approach OK?”, “may I merge?” — scroll up out of sight while the agent sits waiting. decision-pane lists them as cards in a pane beside the chat, answered with ✔ OK, ⏸ Hold or a comment. It calls no model.</p>
+  <div class="cta">
+    <a class="p" href="#install" data-ja="インストール">Install</a>
+    <a href="https://github.com/uehaj/uehaj-marketplace/tree/main/plugins/decision-pane" data-ja="ソースと README">Source &amp; README</a>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="shots">
+    <img class="shot" src="screenshot.png" width="1600" height="760" alt="The Decisions pane beside the transcript: one card per open item with OK and Hold buttons, the folded held and settled sections, and the counts in the status line">
+    <img class="shot" src="screenshot-desktop.png" width="830" height="1692" alt="The same pane in the desktop app: cards with a comment field, a Send button, and OK and Hold buttons">
+  </div>
+
+  <section>
+    <h2 data-ja="できること">What it does</h2>
+    <div class="grid">
+      <div class="card"><h3 data-ja="✔ OK">✔ OK</h3><p data-ja="行を &lt;code&gt;- [x] … (承認 日時)&lt;/code&gt; に書き換え、たたまれた「決着」欄に移します。">Rewrites the line as <code>- [x] … (承認 time)</code> and moves it to the folded settled section.</p></div>
+      <div class="card"><h3 data-ja="⏸ 保留">⏸ Hold</h3><p data-ja="&lt;code&gt;- [~] … (保留 日時)&lt;/code&gt; にして「保留」欄へ。▶ 戻すで元に戻せます。">Marks it <code>- [~] … (保留 time)</code> and folds it away; ▶ Resume brings it back.</p></div>
+      <div class="card"><h3 data-ja="💬 コメント">💬 Comment</h3><p data-ja="問いの下にコメントを足します。AI は子行に回答を書き、必要なら問いの文面を直します。">Adds a comment under the item; the AI answers beneath it and may refine the question.</p></div>
+      <div class="card"><h3 data-ja="👉 / ⏳ 誰の番か">👉 / ⏳ Whose turn</h3><p data-ja="カードの色と印で、あなたの番か AI の番かが分かります。件数はステータスラインにも出ます。">Each card’s color and icon say whose turn it is; the counts also show in the status line.</p></div>
+      <div class="card"><h3 data-ja="📄 ただの Markdown">📄 Plain Markdown</h3><p data-ja="記録は decisions.md のチェックリストのまま。手で直せて、git で差分も読めます。">Everything stays a checklist in decisions.md: edit it by hand, read it in a git diff.</p></div>
+      <div class="card"><h3 data-ja="🌐 英語と日本語">🌐 English and Japanese</h3><p data-ja="表示は Claude Code の言語設定か LANG に合わせます。ファイルに書く印は共通です。">The pane follows Claude Code’s language setting or LANG; the marks in the file are the same in both.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2 data-ja="AI にどう届くか">How your answer reaches the agent</h2>
+    <div class="flow">
+      <span data-ja="AI が問いを &lt;b&gt;decisions.md&lt;/b&gt; に書く">The agent writes its question to <b>decisions.md</b></span><span>→</span>
+      <span data-ja="ペインで ✔ OK / 💬 コメント">You press ✔ OK or 💬 comment</span><span>→</span>
+      <span data-ja="AI が次に動くとき、Claude Code が差分を届ける">On the agent’s next turn, Claude Code hands it the diff</span>
+    </div>
+    <p data-ja="この mod は AI に何も送りません。Claude Code は、AI が Read ツールで読んだファイルが書き換わると、AI の次の動き（あなたのメッセージや、処理の完了通知）にその差分を添えます。だから AI がセッションの初めに decisions.md を Read で読んでおけば、ボタンでの書き換えが届きます。ボタンを押しただけでは AI は起きません。">The mod sends the agent nothing. When a file the agent has read with the Read tool changes on disk, Claude Code attaches the diff to the agent’s next turn — your next message, or a background task’s notice. So once the agent has read <code>decisions.md</code> with Read early in the session, your clicks reach it. A click alone does not wake the agent.</p>
+  </section>
+
+  <section id="install">
+    <h2 data-ja="インストール">Install</h2>
+<pre><span data-ja="# marketplace を足して、mod を入れる"># add the marketplace, then the mod</span>
+claude plugin marketplace add uehaj/uehaj-marketplace
+claude plugin install decision-pane@uehaj-marketplace
+
+<span data-ja="# mod を動かすのに要る（シェルの設定に）"># mods need this (in your shell profile)</span>
+export CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1</pre>
+    <p data-ja="セッションを始めるとペインが開きます。端末が狭くて開かないときは &lt;code&gt;/decisions&lt;/code&gt; で。user スコープで入れれば desktop アプリのローカルセッションでも動きます。">The pane opens when a session starts; <code>/decisions</code> opens it when the terminal is too narrow. Installed at user scope, it also loads in the desktop app’s local sessions.</p>
+    <h2 data-ja="CLAUDE.md に足すもの" style="margin-top:28px">Add this to CLAUDE.md</h2>
+    <p data-ja="入れただけでは、AI は decisions.md に問いを書きません。CLAUDE.md（例えば &lt;code&gt;~/.claude/CLAUDE.md&lt;/code&gt;）に次の項を足してください。">Installing it is not enough: the agent has to be told to write its questions there. Add this to a CLAUDE.md (for example <code>~/.claude/CLAUDE.md</code>):</p>
+<pre data-ja="## 回答をもらっていない問いは decisions.md に書く
+
+- ユーザーへの問い・承認待ちで、まだ回答をもらっていないものは、作業ディレクトリの decisions.md に追記する。
+  書式は 1 件 1 行: `- [ ] &amp;lt;対象&amp;gt;: &amp;lt;何を決めるか&amp;gt;。推奨は、&amp;lt;推奨案&amp;gt;`。補足は 2 スペース字下げの子行に書く。
+- ファイルが無ければ作り、.git/info/exclude に decisions.md を足してコミット対象から外す。
+- `- [x]`（承認済み）・`- [~]`（保留）の行は書き換えない。
+- セッションで最初に decisions.md に触れるときは、Bash ではなく Read ツールで読む。そうすると、ペインでの承認・コメントが
+  次のやりとりで差分として届く。">## Unanswered questions go to decisions.md
+
+- A question or approval you are waiting on the user for: append it to decisions.md in the working
+  directory, one line each: `- [ ] &lt;subject&gt;: &lt;what to decide&gt;. Recommended: &lt;option&gt;`. Details go on
+  lines indented by two spaces under it.
+- If the file does not exist, create it and add decisions.md to .git/info/exclude.
+- Never rewrite a `- [x]` (approved) or `- [~]` (held) line.
+- The first time in a session you touch decisions.md, read it with the Read tool, not Bash, so the pane's
+  approvals and comments reach you as a diff on your next turn.</pre>
+    <p class="note" data-ja="ファイルに書く印（承認・保留・コメント・回答）は、どちらの言語でも同じです。">A Japanese version is in the README. The marks written into the file (承認, 保留, コメント, 回答) are the same in either language.</p>
+  </section>
+</main>
+<footer>MIT License · <a href="https://github.com/uehaj/uehaj-marketplace/tree/main/plugins/decision-pane">uehaj/uehaj-marketplace</a></footer>
+<script>
+if (/^ja\b/i.test(navigator.language || "")) {
+  document.documentElement.lang = "ja";
+  document.title = "decision-pane — エージェントが待っている判断を、1 か所に";
+  document.querySelectorAll("[data-ja]").forEach(e => { e.innerHTML = e.dataset.ja; });
+}
+</script>
+</body>
+</html>
