@@ -60,6 +60,7 @@ a{color:var(--accent)}
     <h2 data-ja="できること">What it does</h2>
     <div class="grid">
       <div class="card"><h3 data-ja="✔ OK">✔ OK</h3><p data-ja="行を &lt;code&gt;- [x] … (承認 日時)&lt;/code&gt; に書き換え、たたまれた「決着」欄に移します。">Rewrites the line as <code>- [x] … (承認 time)</code> and moves it to the folded settled section.</p></div>
+      <div class="card"><h3 data-ja="🔘 選択肢">🔘 Options</h3><p data-ja="子行に &lt;code&gt;- (a) 案&lt;/code&gt; を並べると、案ごとのボタンになります。押すと承認し、&lt;code&gt;- 選択: (a) 案&lt;/code&gt; を足します。">List <code>- (a) option</code> child lines and each becomes a button; pressing one settles the item and adds <code>- 選択: (a) option</code>.</p></div>
       <div class="card"><h3 data-ja="⏸ 保留">⏸ Hold</h3><p data-ja="&lt;code&gt;- [~] … (保留 日時)&lt;/code&gt; にして「保留」欄へ。▶ 戻すで元に戻せます。">Marks it <code>- [~] … (保留 time)</code> and folds it away; ▶ Resume brings it back.</p></div>
       <div class="card"><h3 data-ja="💬 コメント">💬 Comment</h3><p data-ja="問いの下にコメントを足します。AI は子行に回答を書き、必要なら問いの文面を直します。">Adds a comment under the item; the AI answers beneath it and may refine the question.</p></div>
       <div class="card"><h3 data-ja="👉 / ⏳ 誰の番か">👉 / ⏳ Whose turn</h3><p data-ja="カードの色と印で、あなたの番か AI の番かが分かります。件数はステータスラインにも出ます。">Each card’s color and icon say whose turn it is; the counts also show in the status line.</p></div>
@@ -93,6 +94,8 @@ export CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1</pre>
 
 - ユーザーへの問い・承認待ちで、まだ回答をもらっていないものは、作業ディレクトリの decisions.md に追記する。
   書式は 1 件 1 行: `- [ ] &amp;lt;対象&amp;gt;: &amp;lt;何を決めるか&amp;gt;。推奨は、&amp;lt;推奨案&amp;gt;`。補足は 2 スペース字下げの子行に書く。
+  選べる案が複数あるときは、案ごとに `  - (a) &amp;lt;案&amp;gt;` の子行を書く（ペインでボタンになる）。
+- `- [x]` の子行に `- 選択: (b) ...` があればその案で、無ければ推奨案で承認された。
 - ファイルが無ければ作り、.git/info/exclude に decisions.md を足してコミット対象から外す。
 - `- [x]`（承認済み）・`- [~]`（保留）の行は書き換えない。
 - セッションで最初に decisions.md に触れるときは、Bash ではなく Read ツールで読む。そうすると、ペインでの承認・コメントが
@@ -100,12 +103,14 @@ export CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1</pre>
 
 - A question or approval you are waiting on the user for: append it to decisions.md in the working
   directory, one line each: `- [ ] &lt;subject&gt;: &lt;what to decide&gt;. Recommended: &lt;option&gt;`. Details go on
-  lines indented by two spaces under it.
+  lines indented by two spaces under it. When there are several options, give each its own child line
+  `  - (a) &lt;option&gt;` (the pane shows it as a button).
+- A `- [x]` line with a child `- 選択: (b) ...` was approved with that option; without one, with the recommended one.
 - If the file does not exist, create it and add decisions.md to .git/info/exclude.
 - Never rewrite a `- [x]` (approved) or `- [~]` (held) line.
 - The first time in a session you touch decisions.md, read it with the Read tool, not Bash, so the pane's
   approvals and comments reach you as a diff on your next turn.</pre>
-    <p class="note" data-ja="ファイルに書く印（承認・保留・コメント・回答）は、どちらの言語でも同じです。">A Japanese version is in the README. The marks written into the file (承認, 保留, コメント, 回答) are the same in either language.</p>
+    <p class="note" data-ja="ファイルに書く印（承認・保留・コメント・回答・選択）は、どちらの言語でも同じです。">A Japanese version is in the README. The marks written into the file (承認, 保留, コメント, 回答, 選択) are the same in either language.</p>
   </section>
 </main>
 <footer>MIT License · <a href="https://github.com/uehaj/uehaj-marketplace/tree/main/plugins/decision-pane">uehaj/uehaj-marketplace</a></footer>
