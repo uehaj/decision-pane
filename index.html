@@ -37,9 +37,11 @@ p code,li code{background:var(--card);border:1px solid var(--line);border-radius
 .note{color:var(--mute);font-size:.92rem}
 footer{padding:28px 0 48px;text-align:center;color:var(--mute);font-size:.9rem;border-top:1px solid var(--line)}
 a{color:var(--accent)}
+#lang{display:block;margin:12px 16px 8px auto;padding:5px 12px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--fg);font:inherit;font-size:.88rem;cursor:pointer}
 </style>
 </head>
 <body>
+<button id="lang" type="button" lang="ja">日本語</button>
 <header class="wrap">
   <h1>decision-pane</h1>
   <p class="sub" data-ja="エージェントが待っている判断を、1 か所に">the decisions your agent is waiting on, in one place</p>
@@ -115,11 +117,24 @@ export CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1</pre>
 </main>
 <footer>MIT License · <a href="https://github.com/uehaj/uehaj-marketplace/tree/main/plugins/decision-pane">uehaj/uehaj-marketplace</a></footer>
 <script>
-if (/^ja\b/i.test(navigator.language || "")) {
-  document.documentElement.lang = "ja";
-  document.title = "decision-pane — エージェントが待っている判断を、1 か所に";
-  document.querySelectorAll("[data-ja]").forEach(e => { e.innerHTML = e.dataset.ja; });
+const els = document.querySelectorAll("[data-ja]"), btn = document.getElementById("lang");
+const title = { en: document.title, ja: "decision-pane — エージェントが待っている判断を、1 か所に" };
+els.forEach(e => { e.dataset.en = e.innerHTML; });
+function setLang(l) {
+  document.documentElement.lang = l;
+  document.title = title[l];
+  els.forEach(e => { e.innerHTML = e.dataset[l]; });
+  btn.textContent = l === "ja" ? "English" : "日本語";
+  btn.lang = l === "ja" ? "en" : "ja";
 }
+let saved = null;
+try { saved = localStorage.getItem("lang"); } catch {}
+setLang(saved || (/^ja\b/i.test(navigator.language || "") ? "ja" : "en"));
+btn.onclick = () => {
+  const l = document.documentElement.lang === "ja" ? "en" : "ja";
+  setLang(l);
+  try { localStorage.setItem("lang", l); } catch {}
+};
 </script>
 </body>
 </html>
